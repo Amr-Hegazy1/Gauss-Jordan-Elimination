@@ -1,5 +1,7 @@
-import numpy as np
-import copy
+import numpy as np #facilitate matrix operations
+import copy # for deep cloning
+
+####### Test Data ##########
 #  np.array([[0,-2,7],
 #                  [6,5,4],
 #                  [1,7,5],
@@ -11,7 +13,10 @@ import copy
 #                  [-1,1,3,0]
                  
 #                  ],dtype=float)
-example_matrix = np.array([[0,-2,7],
+####### End Test Data ###########
+
+# enter matrix here
+example_matrix =  np.array([[0,-2,7],
                  [6,5,4],
                  [1,7,5],
                  [0,5,4]
@@ -35,19 +40,19 @@ def row_addition(row1,row2,k):
     return np.round(row2 - row1*(k),10)
 
 def sort_matrix(matrix):
-    nonzero_indexes = [get_first_nonzero_element(row) for row in matrix]
+    nonzero_indexes = [get_first_nonzero_element(row) for row in matrix] # the nonzero index represents the row that each row should be positioned at
     
-    matrix_copy = copy.deepcopy(matrix)
-    min_index = min(nonzero_indexes)
-    
+    matrix_copy = copy.deepcopy(matrix) # deep clone to avoid complications
+    min_index = min(nonzero_indexes) # get min to be able to still work if there is no number in the first column in any row
+
     for i in range(len(matrix)):
-        relative_index = nonzero_indexes[i] - min_index
+        relative_index = nonzero_indexes[i] - min_index 
         
-        if nonzero_indexes[i] < len(matrix[0]) and nonzero_indexes[relative_index] - min_index < len(matrix[0]):
+        if nonzero_indexes[i] < len(matrix[0]) and nonzero_indexes[relative_index] - min_index < len(matrix[0]): # if not zero row
              
             matrix_copy[nonzero_indexes[relative_index] - min_index] = matrix[relative_index].copy()
         else:
-            
+            matrix_copy[i] = matrix_copy[-1]
             matrix_copy[-1] = np.zeros(len(matrix[0]))
         
     
@@ -56,7 +61,7 @@ def sort_matrix(matrix):
 
 def echelon_form(matrix):
     for i in range(len(matrix)):
-        matrix = sort_matrix(matrix)
+        matrix = sort_matrix(matrix) 
         nonzero_indexi = get_first_nonzero_element(matrix[i])
         if nonzero_indexi != len(matrix[i]):
             matrix[i] = row_scalar_multiplication(matrix[i],matrix[i][nonzero_indexi])
@@ -78,7 +83,7 @@ def echelon_form(matrix):
 
 def reduced_echelon_form(matrix):
     matrix = echelon_form(matrix)
-   
+    
     for i in range(len(matrix)-1,0,-1):
         nonzero_indexi = len(matrix[i]) - get_first_nonzero_element(matrix[i][-1::-1]) - 1
         if nonzero_indexi != -1:
@@ -93,6 +98,13 @@ def reduced_echelon_form(matrix):
             
         
     
+def rank(matrix):
+    matrix = echelon_form(matrix)
+    count = 0
+    for row in matrix:
+        if not check_if_zero_row(row):
+            count += 1
+    return count
         
     
         
