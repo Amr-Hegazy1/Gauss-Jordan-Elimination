@@ -1,95 +1,104 @@
 import numpy as np
+import copy
 #  np.array([[0,-2,7],
 #                  [6,5,4],
 #                  [1,7,5],
 #                  [0,5,4]
 #                  ],dtype=float)
-example_matrix = np.array([[2,1,3,-9],
-                 [1,-1,2,-7],
-                 [4,3,5,-15],
+# np.array([[0,6,4,0],
+#                  [3,0,-7,0],
+#                  [1,5,1,0],
+#                  [-1,1,3,0]
                  
+#                  ],dtype=float)
+example_matrix = np.array([[0,-2,7],
+                 [6,5,4],
+                 [1,7,5],
+                 [0,5,4]
                  ],dtype=float)
 
-
-def get_zeros(matrix):
+def get_first_nonzero_element(row):
     
-    for row in range(len(matrix)):
-        if np.sum(matrix[row]) == 0:
-            return row
-    return -1
-        
-def get_nonzero_element(row):
     for i in range(len(row)):
         if row[i] != 0:
             return i
-    return -1
-def multiply_by_scalar(row,scalar):
-    for i in range(len(row)):
-        row[i] = row[i] * scalar
-    return row
+    return len(row)
 
-def row_addition_by_scalar(row1,row2,scalar):
-    return_row = []
-    for i in range(len(row1)):
-        return_row.append(row1[i] + row2[i] * scalar )
-    return np.array(return_row,dtype=float)
+def check_if_zero_row(row):
+    return True if(get_first_nonzero_element(row) == len(row)) else False
 
-def get_nonone_element(row):
-    for i in range(len(row)):
-        if row[i] != 0 and row[i] != 1:
-            return i
-    return -1
-def echelon(matrix):
-    zeros = get_zeros(matrix)
-    if zeros != -1:
-        zeros_row = matrix[zeros].copy()
-        matrix[zeros] =  matrix[-1]
-        matrix[-1] = zeros_row
-        
-    nonzero = get_nonzero_element(matrix[0])
-        
+def row_scalar_multiplication(row,k):
+    return (1/k) * row
+
+
+def row_addition(row1,row2,k):
+    return np.round(row2 - row1*(k),10)
+
+def sort_matrix(matrix):
+    nonzero_indexes = [get_first_nonzero_element(row) for row in matrix]
+    
+    matrix_copy = copy.deepcopy(matrix)
+    min_index = min(nonzero_indexes)
     
     for i in range(len(matrix)):
-        nonzero = get_nonzero_element(matrix[i])
-        if nonzero != -1:
-            matrix[i] = multiply_by_scalar(matrix[i],1/matrix[i][nonzero])
-        for j in range(i+1,len(matrix)):
-            nonzero = get_nonzero_element(matrix[j])
-            
-            if (matrix[i][nonzero] != 0 and nonzero == i):
-                
-                matrix[j] = row_addition_by_scalar(matrix[j],matrix[i],-matrix[j][nonzero]/matrix[i][nonzero])
-            else:
-                matrix[j] = row_addition_by_scalar(matrix[j],matrix[i],0)
-
-    nonzero = get_nonzero_element(matrix[-1])
-    if nonzero != -1:
-        matrix[-1] = multiply_by_scalar(matrix[-1],1/matrix[-1][nonzero])
+        relative_index = nonzero_indexes[i] - min_index
         
-    return matrix
+        if nonzero_indexes[i] < len(matrix[0]) and nonzero_indexes[relative_index] - min_index < len(matrix[0]):
+             
+            matrix_copy[nonzero_indexes[relative_index] - min_index] = matrix[relative_index].copy()
+        else:
+            
+            matrix_copy[-1] = np.zeros(len(matrix[0]))
+        
     
-def rank(matrix):
-    echelon_form = echelon(matrix)
-    count = 0
-    for row in echelon_form:
-        for col in row:
-            if col == 1:
-                count += 1
-                break
-    return count
+    
+    return matrix_copy
 
-def reduced_echelon(matrix):
-    echelon_form = echelon(matrix)
-    for i in range(len(echelon_form)-1,-1,-1):
-        nonzero = get_nonzero_element(echelon_form[i])
-        if nonzero != -1:
-            for j in range(i):
-                nonzero = get_nonone_element(echelon_form[j])
-                echelon_form[j] = row_addition_by_scalar(echelon_form[j],echelon_form[i],-echelon_form[j][nonzero])
-    nonzero = get_nonzero_element(echelon_form[-1])
-    print(nonzero)
-    if nonzero != -1:
-        echelon_form[0] = row_addition_by_scalar(echelon_form[0],echelon_form[-1],-echelon_form[0][nonzero])
-    return echelon_form
-print(reduced_echelon(example_matrix))
+def echelon_form(matrix):
+    for i in range(len(matrix)):
+        matrix = sort_matrix(matrix)
+        nonzero_indexi = get_first_nonzero_element(matrix[i])
+        if nonzero_indexi != len(matrix[i]):
+            matrix[i] = row_scalar_multiplication(matrix[i],matrix[i][nonzero_indexi])
+            for j in range(i+1,len(matrix)):
+                nonzero_indexj = get_first_nonzero_element(matrix[j])
+                if nonzero_indexj != len(matrix[i]) and nonzero_indexj == nonzero_indexi:
+                    matrix[j] = row_addition(matrix[i],matrix[j],matrix[j][nonzero_indexj])
+                
+    nonzero_index = get_first_nonzero_element(matrix[-1])
+    if nonzero_index != len(matrix[-1]):
+        matrix[-1] = row_scalar_multiplication(matrix[-1],matrix[-1][nonzero_index])
+    return matrix
+
+
+        
+        
+        
+            
+
+def reduced_echelon_form(matrix):
+    matrix = echelon_form(matrix)
+   
+    for i in range(len(matrix)-1,0,-1):
+        nonzero_indexi = len(matrix[i]) - get_first_nonzero_element(matrix[i][-1::-1]) - 1
+        if nonzero_indexi != -1:
+            for j in range(i-1,-1,-1):
+                nonzero_indexj = len(matrix[j]) - get_first_nonzero_element(matrix[j][-1::-1]) - 1
+                if nonzero_indexj != -1 and nonzero_indexj == nonzero_indexi:
+                    matrix[j] = row_addition(matrix[i],matrix[j],matrix[j][nonzero_indexj])
+        
+                
+                
+    return matrix
+            
+        
+    
+        
+    
+        
+    
+
+
+print(reduced_echelon_form(example_matrix))
+
                           
