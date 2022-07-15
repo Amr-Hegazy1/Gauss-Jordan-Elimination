@@ -42,22 +42,26 @@ def row_addition(row1,row2,k):
 def sort_matrix(matrix):
     nonzero_indexes = [get_first_nonzero_element(row) for row in matrix] # the nonzero index represents the row that each row should be positioned at
     
-    matrix_copy = copy.deepcopy(matrix) # deep clone to avoid complications
+    out_matrix = np.empty((len(matrix),len(matrix[0]),))
+    out_matrix[:] = np.nan
     min_index = min(nonzero_indexes) # get min to be able to still work if there is no number in the first column in any row
 
-    for i in range(len(matrix)):
-        relative_index = nonzero_indexes[i] - min_index 
-        
-        if nonzero_indexes[i] < len(matrix[0]) and nonzero_indexes[relative_index] - min_index < len(matrix[0]): # if not zero row
-             
-            matrix_copy[nonzero_indexes[relative_index] - min_index] = matrix[relative_index].copy()
+    for i in range(len(nonzero_indexes)):
+        relative_index = nonzero_indexes[i] - min_index
+        if relative_index != len(matrix):
+            while not np.isnan(out_matrix[relative_index]).any():
+                relative_index += 1
         else:
-            matrix_copy[i] = matrix_copy[-1]
-            matrix_copy[-1] = np.zeros(len(matrix[0]))
+            relative_index = -1
+            while not np.isnan(out_matrix[relative_index]).any():
+                relative_index -= 1
+        out_matrix[relative_index] = matrix[i]
+            
+            
         
     
     
-    return matrix_copy
+    return out_matrix
 
 def echelon_form(matrix):
     for i in range(len(matrix)):
